@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><title>AIS Sources</title>
+<style>body{font:14px Segoe UI,Arial;background:#17202a;color:#eef;padding:18px}h1{font-size:22px}table{border-collapse:collapse;width:100%;background:#222d38}th,td{padding:9px;border-bottom:1px solid #43505d;text-align:left}.both{color:#72e6a6}.one{color:#ffd36b}.stale{color:#aaa}</style></head><body>
+<h1>AIS reception sources</h1><p id="state">Loading...</p><table><thead><tr><th>MMSI</th><th>Source</th><th>AvNav 1 age</th><th>AvNav 2 age</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const api=(window.AVNAV_BASE_URL||'.')+'/api';
+function age(x){return x===undefined?'—':x.toFixed(1)+' s'}
+async function load(){try{const r=await fetch(api,{cache:'no-store'});const d=await r.json();document.getElementById('state').textContent=d.targets.length+' targets; timeout '+d.timeout+' s';document.getElementById('rows').innerHTML=d.targets.map(t=>{let c=t.active.length===2?'both':t.active.length===1?'one':'stale';return `<tr><td>${t.mmsi}</td><td class="${c}">Source: ${t.source}</td><td>${age(t.seen['1']?.age)}</td><td>${age(t.seen['2']?.age)}</td></tr>`}).join('')}catch(e){document.getElementById('state').textContent='API error: '+e}setTimeout(load,1000)}load();
+</script></body></html>
