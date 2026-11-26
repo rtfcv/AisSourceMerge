@@ -35,7 +35,7 @@ export default (api) => {
       const poll = async () => {
         if (context.aisSourceStopped) return;
         try {
-          const response = await fetch(new URL('api', api.getBaseUrl()).toString(), {cache: 'no-store'});
+          const response = await fetch(new URL('api', import.meta.url).toString(), {cache: 'no-store'});
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
           context.aisSourceTargets = Array.isArray(data.targets) ? data.targets : [];
@@ -51,7 +51,7 @@ export default (api) => {
       poll();
     },
 
-    finalizeFunktion: function (context) {
+    finalizeFunction: function (context) {
       context.aisSourceStopped = true;
       if (context.aisSourceTimer) window.clearTimeout(context.aisSourceTimer);
     },

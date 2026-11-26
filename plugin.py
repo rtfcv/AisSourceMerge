@@ -22,6 +22,8 @@ class Plugin:
         self.targets={}
         self.fragments={1:{},2:{}}
         self.counts={1:0,2:0}
+        self.rejected={1:0,2:0}
+        self.packets={1:0,2:0}
         self.sockets=[]
         self.threads=[]
         self.stop=False
@@ -122,7 +124,11 @@ class Plugin:
 
     def _process(self, line, source_id):
         line=line.strip()
-        if not line.startswith(('!AIVDM','!AIVDO')) or not self._checksum_ok(line): return
+        if not line.startswith(('!AIVDM','!AIVDO')) or not self._checksum_ok(line):
+            if self.rejected[source_id] < 5:
+                self.rejected[source_id] += 1
+                self.api.log('AIS Source Merge: rejected input on source %d: %r' % (source_id, line[:120]))
+            return
         self.counts[source_id] += 1
         raw=line.split('*',1)[0]
         p=raw.split(',')
@@ -161,9 +167,12 @@ class Plugin:
         s.settimeout(1.0); self.sockets.append(s)
         self.api.log('AIS Source Merge listening for %s on UDP %s' % (self.cfg['name%d'%source_id],port))
         while not self.stop:
-            try: data,_=s.recvfrom(65535)
+            try: data,addr=s.recvfrom(65535)
             except socket.timeout: continue
             except OSError: break
+            if self.packets[source_id] < 3:
+                self.api.log('AIS Source Merge: packet on source %d from %s (%d bytes)' % (source_id, addr[0], len(data)))
+            self.packets[source_id] += 1
             for line in data.decode('ascii','ignore').replace('\r','\n').split('\n'):
                 if line.strip():
                     try: self._process(line,source_id)
